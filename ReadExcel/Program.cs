@@ -7,13 +7,19 @@ using ReadExcel;
 // TODO 改用类代码和json文件无相互依赖的实现方式，例如直接从excel文件转为json文件
 
 // 步骤1.生成代码文件
-//var classes = ClassReader.CollectClassesInfo("C:\\Users\\LC-MZHANGXI\\Desktop\\111.xlsx");
-//foreach (var classInfo in classes)
-//    ClassFileGenerator.GenerateClassFile(classInfo);
+var classes = ClassReader.CollectClassesInfo("C:\\Users\\LC-MZHANGXI\\Desktop\\111.xlsx");
+if (classes != null)
+{
+    foreach (var classInfo in classes)
+        ClassFileGenerator.GenerateClassFile(classInfo);
+}
 
 // 步骤2.将配置数据转换为json文件
 var datas = ClassReader.CollectNumeric("C:\\Users\\LC-MZHANGXI\\Desktop\\111.xlsx");
-foreach (var data in datas)
+if (datas != null)
 {
-    NumericFileGenerator.GenerateNumericFile(data.Key.Name, data.Value);
+    foreach (var data in datas)
+    {
+        NumericFileGenerator.GenerateNumericFile(data.Key.Name, data.Value);
+    }
 }
