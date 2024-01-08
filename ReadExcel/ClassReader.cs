@@ -7,13 +7,20 @@ namespace ReadExcel
     internal class ClassReader
     {
         private const string OutputSymbol = "*";
+        private const int fieldOutputSymbolRowIndex = 1;
+        private const int fieldNameCellRowIndex = 2;
+        private const int fieldTypeRowIndex = 3;
+        private const int defaultValueRowIndex = 4;
+        private const int dataStartRowIndex = 5;
+
+        private const string valueOutputSymbolColumnName = "A";
 
         public static IReadOnlyList<ClassInfo>? CollectClassesInfo(string docName)
         {
             using (SpreadsheetDocument document = SpreadsheetDocument.Open(docName, false))
             {
                 IEnumerable<Sheet>? sheets = document.WorkbookPart?.Workbook.Descendants<Sheet>();
-                if (sheets is null || sheets.Count() == 0)
+                if (sheets == null || sheets.Count() == 0)
                     return null;
 
                 List<ClassInfo> classesInfo = new List<ClassInfo>();
@@ -27,17 +34,83 @@ namespace ReadExcel
             }
         }
 
+        public static Dictionary<Type, List<BaseData>> CollectNumeric(string docName)
+        {
+            using (SpreadsheetDocument document = SpreadsheetDocument.Open(docName, false))
+            {
+                IEnumerable<Sheet>? sheets = document.WorkbookPart?.Workbook.Descendants<Sheet>();
+                if (sheets == null || sheets.Count() == 0)
+                    return null; // TODO
+
+                Dictionary<Type, List<BaseData>> numericsByClassType = new Dictionary<Type, List<BaseData>>();
+                foreach (var sheet in sheets)
+                {
+                    string? id = sheet.Id;
+                    if (id == null)
+                        return null; // TODO
+
+                    WorksheetPart worksheetPart = (WorksheetPart)document.WorkbookPart!.GetPartById(id);
+                    string classTypeStr = sheet.Name.Value;
+                    var type = Type.GetType(string.Format("ReadExcel." + classTypeStr));
+                    if (type.IsSubclassOf(typeof(BaseData)))
+                    {
+                        var properties = type.GetProperties();
+                        IEnumerable<Cell> propertyNameCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == fieldNameCellRowIndex);
+                        if (propertyNameCells.Count() == 0)
+                            return null; // TODO
+
+                        // 构建字段名到表格列的索引
+                        Dictionary<string, string> propertyNameToColumn = new Dictionary<string, string>();
+                        foreach (var property in properties)
+                        {
+                            string propertyName = property.Name;
+                            var specificPropertyNameCell = propertyNameCells.Where(c => GetCellText(document, c).Equals(propertyName));
+                            if (specificPropertyNameCell.Count() == 0)
+                                return null; //  TODO
+                            string columnName = GetColumnName(specificPropertyNameCell.First().CellReference.Value);
+                            propertyNameToColumn.Add(propertyName, columnName);
+                        }
+
+                        IEnumerable<Cell> valueOutputCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => string.Compare(GetColumnName(c.CellReference?.Value), valueOutputSymbolColumnName, true) == 0);
+                        foreach (var cell in valueOutputCells)
+                        {
+                            if (IsOutout(GetCellText(document, cell)))
+                            {
+                                uint rowIndex = GetRowIndex(cell.CellReference.Value) ?? 0;
+                                var objectInstance = Activator.CreateInstance(type);
+                                foreach (var property in properties)
+                                {
+                                    string propertyName = property.Name;
+                                    var specificPropertyValueCell = worksheetPart.Worksheet.Descendants<Cell>().Where(c => string.Compare(c.CellReference?.Value, propertyNameToColumn[propertyName] + rowIndex, true) == 0);
+                                    if (specificPropertyValueCell.Count() == 0)
+                                        return null; //  TODO
+                                    string columnName = GetColumnName(specificPropertyValueCell.First().CellReference.Value);
+                                    string valueText = GetCellText(document, specificPropertyValueCell.First());
+                                    var value = Convert.ChangeType(valueText, property.PropertyType); // TODO 是否要转换判断
+                                    property.SetValue(objectInstance, value);
+                                }
+
+                                if (numericsByClassType.ContainsKey(type))
+                                    numericsByClassType[type].Add((BaseData)objectInstance);
+                                else
+                                    numericsByClassType.Add(type, new List<BaseData>() { (BaseData)objectInstance });
+                            }
+                        }
+                    }
+                }
+                return numericsByClassType;
+            }
+        }
+
         private static ClassInfo? GetClassInfo(SpreadsheetDocument document, Sheet sheet)
         {
             ClassInfo classInfo = new ClassInfo();
             string? id = sheet.Id;
             if (id is null)
                 return null;
-            int outputSymbolRowIndex = 1;
-            int fieldNameCellRowIndex = 2;
-            int fieldTypeRowIndex = 3;
+
             WorksheetPart worksheetPart = (WorksheetPart)document.WorkbookPart!.GetPartById(id);
-            IEnumerable<Cell> cells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == outputSymbolRowIndex);
+            IEnumerable<Cell> cells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == fieldOutputSymbolRowIndex);
             if (cells.Count() == 0)
                 return null; // TODO
 
@@ -46,7 +119,7 @@ namespace ReadExcel
                 return null; // TODO
             classInfo.ClassName = sheet.Name.Value;
 
-            List<FieldInfo> fieldInfos = new List<FieldInfo>();
+            List<PropertyInfo> propertyInfos = new List<PropertyInfo>();
             // 获取所有输出的属性名及数据类型
             foreach (var cell in cells)
             {
@@ -56,17 +129,17 @@ namespace ReadExcel
                     IEnumerable<Cell> nameCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == fieldNameCellRowIndex && string.Compare(GetColumnName(c.CellReference?.Value), columnName, true) == 0);
                     if (nameCells.Count() == 0)
                         return null; // TODO
-                    string fieldName = GetCellText(document, nameCells.First()); // TODO 对类名规范进行判断
+                    string propertyName = GetCellText(document, nameCells.First()); // TODO 对类名规范进行判断
 
                     IEnumerable<Cell> typeCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == fieldTypeRowIndex && string.Compare(GetColumnName(c.CellReference?.Value), columnName, true) == 0);
                     if (typeCells.Count() == 0)
                         return null; // TODO
-                    string fieldType = GetCellText(document, typeCells.First()); // TODO 对数据类型进行判断
+                    string propertyType = GetCellText(document, typeCells.First()); // TODO 对数据类型进行判断
 
-                    fieldInfos.Add(new FieldInfo() { Name = fieldName, Type = fieldType });
+                    propertyInfos.Add(new PropertyInfo() { Name = propertyName, Type = propertyType });
                 }
             }
-            classInfo.Fields = fieldInfos;
+            classInfo.Properties = propertyInfos;
             return classInfo;
         }
 

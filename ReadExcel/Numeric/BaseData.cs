@@ -1,7 +1,10 @@
-﻿namespace ReadExcel
+﻿using System.Text.Json.Serialization;
+
+namespace ReadExcel
 {
     public class BaseData
     {
-        public int NID;
+        [JsonPropertyOrder(-1)]
+        public int NID { get; set; }
     }
 }

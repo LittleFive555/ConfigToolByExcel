@@ -3,10 +3,10 @@
     internal struct ClassInfo
     {
         public string ClassName;
-        public IReadOnlyList<FieldInfo> Fields;
+        public IReadOnlyList<PropertyInfo> Properties;
     }
 
-    internal struct FieldInfo
+    internal struct PropertyInfo
     {
         public string Name;
         public string Type;

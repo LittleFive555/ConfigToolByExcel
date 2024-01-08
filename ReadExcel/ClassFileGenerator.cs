@@ -22,11 +22,11 @@ namespace ReadExcel
                 AddLine(fileStream, 0, "{");
                 AddLine(fileStream, 1, string.Format("public class {0} : {1}", classInfo.ClassName, typeof(BaseData).Name));
                 AddLine(fileStream, 1, "{");
-                foreach (FieldInfo fieldInfo in classInfo.Fields)
+                foreach (PropertyInfo fieldInfo in classInfo.Properties)
                 {
                     if (fieldInfo.Name == "NID")
                         continue;
-                    AddLine(fileStream, 2, string.Format("public {0} {1};", fieldInfo.Type, fieldInfo.Name));
+                    AddLine(fileStream, 2, $"public {fieldInfo.Type} {fieldInfo.Name} {{ get; set; }}");
                 }
                 AddLine(fileStream, 1, "}");
                 AddLine(fileStream, 0, "}");
