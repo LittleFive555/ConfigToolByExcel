@@ -7,13 +7,14 @@ namespace ReadExcel
     internal class ClassReader
     {
         private const string OutputSymbol = "*";
-        private const int fieldOutputSymbolRowIndex = 1;
-        private const int fieldNameCellRowIndex = 2;
-        private const int fieldTypeRowIndex = 3;
-        private const int defaultValueRowIndex = 4;
-        private const int dataStartRowIndex = 5;
+        private const int FieldOutputSymbolRowIndex = 1;
+        private const int FieldNameCellRowIndex = 2;
+        private const int FieldTypeRowIndex = 3;
+        private const int CommentRowIndex = 4;
+        private const int DefaultValueRowIndex = 5;
+        private const int DataStartRowIndex = 6;
 
-        private const string valueOutputSymbolColumnName = "A";
+        private const string ValueOutputSymbolColumnName = "A";
 
         public static IReadOnlyList<ClassInfo>? CollectClassesInfo(string docName)
         {
@@ -55,7 +56,7 @@ namespace ReadExcel
                     if (type.IsSubclassOf(typeof(BaseData)))
                     {
                         var properties = type.GetProperties();
-                        IEnumerable<Cell> propertyNameCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == fieldNameCellRowIndex);
+                        IEnumerable<Cell> propertyNameCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == FieldNameCellRowIndex);
                         if (propertyNameCells.Count() == 0)
                             return null; // TODO
 
@@ -71,7 +72,7 @@ namespace ReadExcel
                             propertyNameToColumn.Add(propertyName, columnName);
                         }
 
-                        IEnumerable<Cell> valueOutputCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => string.Compare(GetColumnName(c.CellReference?.Value), valueOutputSymbolColumnName, true) == 0);
+                        IEnumerable<Cell> valueOutputCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => string.Compare(GetColumnName(c.CellReference?.Value), ValueOutputSymbolColumnName, true) == 0);
                         foreach (var cell in valueOutputCells)
                         {
                             if (IsOutout(GetCellText(document, cell)))
@@ -110,7 +111,7 @@ namespace ReadExcel
                 return null;
 
             WorksheetPart worksheetPart = (WorksheetPart)document.WorkbookPart!.GetPartById(id);
-            IEnumerable<Cell> cells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == fieldOutputSymbolRowIndex);
+            IEnumerable<Cell> cells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == FieldOutputSymbolRowIndex);
             if (cells.Count() == 0)
                 return null; // TODO
 
@@ -126,12 +127,12 @@ namespace ReadExcel
                 if (IsOutout(GetCellText(document, cell)))
                 {
                     string columnName = GetColumnName(cell.CellReference?.Value);
-                    IEnumerable<Cell> nameCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == fieldNameCellRowIndex && string.Compare(GetColumnName(c.CellReference?.Value), columnName, true) == 0);
+                    IEnumerable<Cell> nameCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == FieldNameCellRowIndex && string.Compare(GetColumnName(c.CellReference?.Value), columnName, true) == 0);
                     if (nameCells.Count() == 0)
                         return null; // TODO
                     string propertyName = GetCellText(document, nameCells.First()); // TODO 对类名规范进行判断
 
-                    IEnumerable<Cell> typeCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == fieldTypeRowIndex && string.Compare(GetColumnName(c.CellReference?.Value), columnName, true) == 0);
+                    IEnumerable<Cell> typeCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == FieldTypeRowIndex && string.Compare(GetColumnName(c.CellReference?.Value), columnName, true) == 0);
                     if (typeCells.Count() == 0)
                         return null; // TODO
                     string propertyType = GetCellText(document, typeCells.First()); // TODO 对数据类型进行判断
