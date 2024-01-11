@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using ReadExcel;
+using System.Text.Json;
 
 // 以下两个步骤需要分两次运行，因为步骤2需要依赖于步骤1生成的代码来读取数据并生成json文件。
 // 步骤1生成代码后，需要经过编译，再执行步骤2
@@ -11,7 +12,7 @@ var classes = ClassReader.CollectClassesInfo("C:\\Users\\LC-MZHANGXI\\Desktop\\1
 if (classes != null)
 {
     foreach (var classInfo in classes)
-        ClassFileGenerator.GenerateClassFile(classInfo);
+        ClassFileGenerator.GenerateClassFile(classInfo, "D:\\UnityProject\\ExcelData\\Assets\\Scripts\\Numeric");
 }
 
 // 步骤2.将配置数据转换为json文件
@@ -20,6 +21,6 @@ if (datas != null)
 {
     foreach (var data in datas)
     {
-        NumericFileGenerator.GenerateNumericFile(data.Key.Name, data.Value);
+        NumericFileGenerator.GenerateNumericFile(data.Key.Name, data.Value, "D:\\UnityProject\\ExcelData\\Assets\\Numeric");
     }
 }

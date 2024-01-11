@@ -4,14 +4,13 @@ namespace ReadExcel
 {
     internal class ClassFileGenerator
     {
-        private static readonly string OutputPath = "D:\\SourceCode\\ReadExcel\\ReadExcel\\Numeric\\";
         private const int SpaceCountPerLevel = 4;
         private const string NamespaceStr = "ReadExcel";
 
-        public static void GenerateClassFile(ClassInfo classInfo)
+        public static void GenerateClassFile(ClassInfo classInfo, string outputPath)
         {
             string fileName = string.Format("{0}.cs", classInfo.ClassName);
-            string fullPath = Path.Combine(OutputPath, fileName);
+            string fullPath = Path.Combine(outputPath, fileName);
             // 如果文件存在，先删除
             if (File.Exists(fullPath))
                 File.Delete(fullPath);

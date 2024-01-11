@@ -5,11 +5,9 @@ namespace ReadExcel
 {
     internal class NumericFileGenerator
     {
-        private static readonly string OutputPath = "C:\\Users\\LC-MZHANGXI\\Desktop\\NumericData";
-
-        public static void GenerateNumericFile(string fileName, IReadOnlyList<BaseData> datas)
+        public static void GenerateNumericFile(string fileName, IReadOnlyList<BaseData> datas, string outputPath)
         {
-            string fullPath = Path.Combine(OutputPath, string.Format("{0}.num", fileName));
+            string fullPath = Path.Combine(outputPath, string.Format("{0}.num", fileName));
             if (File.Exists(fullPath))
                 File.Delete(fullPath);
             StringBuilder sb = new StringBuilder();
