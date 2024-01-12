@@ -6,6 +6,7 @@ namespace ReadExcel
     {
         private const int SpaceCountPerLevel = 4;
         private const string NamespaceStr = "ReadExcel";
+        private const string BaseClassName = "BaseData";
 
         public static void GenerateClassFile(ClassInfo classInfo, string outputPath)
         {
@@ -19,14 +20,13 @@ namespace ReadExcel
             {
                 AddLine(fileStream, 0, string.Format("namespace {0}", NamespaceStr));
                 AddLine(fileStream, 0, "{");
-                AddLine(fileStream, 1, string.Format("public class {0} : {1}", classInfo.ClassName, typeof(BaseData).Name));
+                if (classInfo.ClassName.Equals(BaseClassName))
+                    AddLine(fileStream, 1, string.Format("public class {0}", classInfo.ClassName));
+                else
+                    AddLine(fileStream, 1, string.Format("public class {0} : {1}", classInfo.ClassName, BaseClassName));
                 AddLine(fileStream, 1, "{");
                 foreach (PropertyInfo fieldInfo in classInfo.Properties)
-                {
-                    if (fieldInfo.Name == "NID")
-                        continue;
                     AddLine(fileStream, 2, $"public {fieldInfo.Type} {fieldInfo.Name} {{ get; set; }}");
-                }
                 AddLine(fileStream, 1, "}");
                 AddLine(fileStream, 0, "}");
             }

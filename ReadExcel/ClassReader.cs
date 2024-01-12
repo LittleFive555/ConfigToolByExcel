@@ -1,4 +1,7 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
+using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
@@ -25,6 +28,17 @@ namespace ReadExcel
                     return null;
 
                 List<ClassInfo> classesInfo = new List<ClassInfo>();
+
+                ClassInfo baseDataInfo = new ClassInfo() 
+                { 
+                    ClassName = "BaseData",
+                    Properties = new List<PropertyInfo>() 
+                    {
+                        new PropertyInfo() { Type = "int", Name = "NID" } 
+                    }
+                };
+                classesInfo.Add(baseDataInfo);
+
                 foreach (var sheet in sheets)
                 {
                     ClassInfo? classInfo = GetClassInfo(document, sheet);
@@ -35,7 +49,7 @@ namespace ReadExcel
             }
         }
 
-        public static Dictionary<Type, List<BaseData>>? CollectNumeric(string docName)
+        public static Dictionary<string, JsonArray>? CollectNumeric(string docName)
         {
             using (SpreadsheetDocument document = SpreadsheetDocument.Open(docName, false))
             {
@@ -43,76 +57,17 @@ namespace ReadExcel
                 if (sheets == null || sheets.Count() == 0)
                     return null;
 
-                Dictionary<Type, List<BaseData>> numericsByClassType = new Dictionary<Type, List<BaseData>>();
+
+                Dictionary<string, JsonArray> jsonNumerics = new Dictionary<string, JsonArray>();
                 foreach (var sheet in sheets)
                 {
                     string classTypeStr = sheet.Name?.Value ?? string.Empty;
-                    string classTypeWithNamespaceStr = string.Format("ReadExcel." + classTypeStr);
-                    var type = Type.GetType(classTypeWithNamespaceStr);
-                    if (type == null)
-                    {
-                        Console.WriteLine(string.Format("Warning: {0}", classTypeWithNamespaceStr));
-                        continue;
-                    }
-
-                    List<BaseData>? datas = GetDatas(document, sheet, type);
+                    JsonArray? datas = GetDatas(document, sheet);
                     if (datas != null && datas.Count > 0)
-                        numericsByClassType.Add(type, datas);
+                        jsonNumerics.Add(classTypeStr, datas);
                 }
-                return numericsByClassType;
+                return jsonNumerics;
             }
-        }
-
-        private static List<BaseData>? GetDatas(SpreadsheetDocument document, Sheet sheet, Type? type)
-        {
-            string? id = sheet.Id;
-            if (id == null)
-                throw new NullReferenceException(string.Format("Error: Sheet {0} has no id.", sheet.Name));
-
-            var datas = new List<BaseData>();
-            WorksheetPart worksheetPart = (WorksheetPart)document.WorkbookPart!.GetPartById(id);
-            if (type != null && type.IsSubclassOf(typeof(BaseData)))
-            {
-                IEnumerable<Cell> propertyNameCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == PropertyNameCellRowIndex);
-                if (propertyNameCells.Count() == 0)
-                    return null; // 空表
-
-                // 构建字段名到表格列的索引
-                var properties = type.GetProperties();
-                Dictionary<string, string> propertyNameToColumn = new Dictionary<string, string>();
-                foreach (var property in properties)
-                {
-                    string propertyName = property.Name;
-                    var specificPropertyNameCell = propertyNameCells.First(c => GetCellText(document, c).Equals(propertyName));
-                    if (specificPropertyNameCell?.CellReference == null)
-                        throw new NullReferenceException(string.Format("Error: Sheet {0} has no property {1}", sheet.Name, propertyName));
-
-                    string columnName = GetColumnName(specificPropertyNameCell.CellReference.Value);
-                    propertyNameToColumn.Add(propertyName, columnName);
-                }
-
-                IEnumerable<Cell> valueOutputCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => string.Compare(GetColumnName(c.CellReference?.Value), ValueOutputSymbolColumnName, true) == 0);
-                foreach (var cell in valueOutputCells)
-                {
-                    if (IsOutout(GetCellText(document, cell)))
-                    {
-                        uint rowIndex = GetRowIndex(cell.CellReference?.Value) ?? 0;
-                        var objectInstance = Activator.CreateInstance(type);
-                        foreach (var property in properties)
-                        {
-                            string propertyName = property.Name;
-                            var specificPropertyValueCell = worksheetPart.Worksheet.Descendants<Cell>().First(c => string.Compare(c.CellReference?.Value, propertyNameToColumn[propertyName] + rowIndex, true) == 0);
-                            string columnName = GetColumnName(specificPropertyValueCell.CellReference?.Value);
-                            string valueText = GetCellText(document, specificPropertyValueCell);
-                            var value = Convert.ChangeType(valueText, property.PropertyType); // TODO 是否要转换判断
-                            property.SetValue(objectInstance, value);
-                        }
-                        datas.Add((BaseData)objectInstance);
-                    }
-                }
-            }
-
-            return datas;
         }
 
         private static ClassInfo? GetClassInfo(SpreadsheetDocument document, Sheet sheet)
@@ -146,6 +101,8 @@ namespace ReadExcel
                     if (nameCells.Count() == 0)
                         return null; // TODO
                     string propertyName = GetCellText(document, nameCells.First()); // TODO 对类名规范进行判断
+                    if (propertyName.Equals("NID")) // 基类包含，直接跳过
+                        continue;
 
                     IEnumerable<Cell> typeCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == PropertyTypeRowIndex && string.Compare(GetColumnName(c.CellReference?.Value), columnName, true) == 0);
                     if (typeCells.Count() == 0)
@@ -157,6 +114,89 @@ namespace ReadExcel
             }
             classInfo.Properties = propertyInfos;
             return classInfo;
+        }
+
+        private static JsonArray? GetDatas(SpreadsheetDocument document, Sheet sheet)
+        {
+            string? id = sheet.Id;
+            if (id == null)
+                throw new NullReferenceException(string.Format("Error: Sheet {0} has no id.", sheet.Name));
+
+            WorksheetPart worksheetPart = (WorksheetPart)document.WorkbookPart!.GetPartById(id);
+
+            IEnumerable<Cell> cells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == PropertyOutputSymbolRowIndex);
+            if (cells.Count() == 0) // 空表
+                return null;
+
+            // 以工作表名作为类名
+            if (string.IsNullOrEmpty(sheet?.Name?.Value))
+            {
+                Console.WriteLine("Error: A sheet has no name.");
+                return null;
+            }
+
+            List<PropertyInfo> propertyInfos = new List<PropertyInfo>();
+            // 构建字段名到表格列的索引
+            Dictionary<string, string> propertyNameToColumn = new Dictionary<string, string>();
+            foreach (var cell in cells)
+            {
+                if (IsOutout(GetCellText(document, cell)))
+                {
+                    string columnName = GetColumnName(cell.CellReference?.Value);
+                    IEnumerable<Cell> nameCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => (GetRowIndex(c.CellReference?.Value) ?? 0) == PropertyNameCellRowIndex && string.Compare(GetColumnName(c.CellReference?.Value), columnName, true) == 0);
+                    if (nameCells.Count() == 0)
+                        return null; // TODO
+                    string propertyName = GetCellText(document, nameCells.First()); // TODO 对类名规范进行判断
+                    propertyNameToColumn.Add(propertyName, columnName);
+                }
+            }
+
+            JsonArray jsonArray = new JsonArray();
+            IEnumerable<Cell> valueOutputCells = worksheetPart.Worksheet.Descendants<Cell>().Where(c => string.Compare(GetColumnName(c.CellReference?.Value), ValueOutputSymbolColumnName, true) == 0);
+            foreach (var cell in valueOutputCells)
+            {
+                if (IsOutout(GetCellText(document, cell)))
+                {
+                    JsonObject jsonObject = new JsonObject();
+                    foreach (var propertyName in propertyNameToColumn.Keys)
+                    {
+                        string columnName = propertyNameToColumn[propertyName];
+                        uint valueRowIndex = GetRowIndex(cell.CellReference?.Value) ?? 0;
+                        var specificPropertyValueCell = worksheetPart.Worksheet.Descendants<Cell>().First(c => string.Compare(c.CellReference?.Value, columnName + valueRowIndex, true) == 0);
+                        string valueText = GetCellText(document, specificPropertyValueCell);
+
+                        var specificPropertyValueTypeCell = worksheetPart.Worksheet.Descendants<Cell>().First(c => string.Compare(c.CellReference?.Value, columnName + PropertyTypeRowIndex, true) == 0);
+                        string propertyValueTypeText = GetCellText(document, specificPropertyValueTypeCell);
+
+                        string fullTypeName = GetFullTypeName(propertyValueTypeText);
+                        Type? type = Type.GetType(fullTypeName);
+                        if (type == null)
+                        {
+                            Console.WriteLine($"Error: Didn't find type <{propertyValueTypeText}>.");
+                            return null;
+                        }
+                        var value = Convert.ChangeType(valueText, type); // TODO 是否要转换判断
+                        var jsonNode = JsonSerializer.SerializeToNode(value, JsonTypeInfo.CreateJsonTypeInfo(type, JsonSerializerOptions.Default));
+                        jsonObject.Add(propertyName, jsonNode);
+                    }
+                    jsonArray.Add(jsonObject);
+                }
+            }
+            return jsonArray;
+        }
+
+        private static string GetFullTypeName(string input)
+        {
+            switch(input)
+            {
+                case "int":
+                    return "System.Int32";
+                case "float":
+                    return "System.Single";
+                case "string":
+                    return "System.String";
+            }
+            return string.Empty;
         }
 
         private static string GetCellText(SpreadsheetDocument document, Cell cell)
