@@ -5,7 +5,7 @@ namespace ReadExcel
 {
     internal class NumericFileGenerator
     {
-        public static void GenerateNumericFile(string fileName, JsonArray datas, string outputPath)
+        public static void GenerateNumericFile(string fileName, JsonNode datas, string outputPath)
         {
             string fullPath = Path.Combine(outputPath, string.Format("{0}.num", fileName));
             if (File.Exists(fullPath))

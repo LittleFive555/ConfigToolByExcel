@@ -18,16 +18,29 @@ namespace ReadExcel
 
             using (FileStream fileStream = File.Create(fullPath))
             {
+                AddLine(fileStream, 0, "using System;");
+                AddLine(fileStream, 0, string.Empty);
+
                 AddLine(fileStream, 0, string.Format("namespace {0}", NamespaceStr));
                 AddLine(fileStream, 0, "{");
+
+                AddLine(fileStream, 1, "[Serializable]");
                 if (classInfo.ClassName.Equals(BaseClassName))
                     AddLine(fileStream, 1, string.Format("public class {0}", classInfo.ClassName));
                 else
                     AddLine(fileStream, 1, string.Format("public class {0} : {1}", classInfo.ClassName, BaseClassName));
                 AddLine(fileStream, 1, "{");
                 foreach (PropertyInfo fieldInfo in classInfo.Properties)
-                    AddLine(fileStream, 2, $"public {fieldInfo.Type} {fieldInfo.Name} {{ get; set; }}");
+                    AddLine(fileStream, 2, $"public {fieldInfo.Type} {fieldInfo.Name};");
                 AddLine(fileStream, 1, "}");
+
+                AddLine(fileStream, 1, string.Empty);
+
+                AddLine(fileStream, 1, string.Format("public class N{0}List", classInfo.ClassName));
+                AddLine(fileStream, 1, "{");
+                AddLine(fileStream, 2, string.Format("public {0}[] Content;", classInfo.ClassName));
+                AddLine(fileStream, 1, "}");
+
                 AddLine(fileStream, 0, "}");
             }
         }

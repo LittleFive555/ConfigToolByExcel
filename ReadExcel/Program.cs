@@ -15,6 +15,6 @@ if (datas != null)
 {
     foreach (var data in datas)
     {
-        NumericFileGenerator.GenerateNumericFile(data.Key, data.Value, "D:\\UnityProject\\ExcelData\\Assets\\Numeric");
+        NumericFileGenerator.GenerateNumericFile(data.Key, data.Value, "D:\\UnityProject\\ExcelData\\Assets\\StreamingAssets\\NumericData");
     }
 }

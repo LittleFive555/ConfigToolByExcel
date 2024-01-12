@@ -49,7 +49,7 @@ namespace ReadExcel
             }
         }
 
-        public static Dictionary<string, JsonArray>? CollectNumeric(string docName)
+        public static Dictionary<string, JsonObject>? CollectNumeric(string docName)
         {
             using (SpreadsheetDocument document = SpreadsheetDocument.Open(docName, false))
             {
@@ -57,14 +57,19 @@ namespace ReadExcel
                 if (sheets == null || sheets.Count() == 0)
                     return null;
 
-
-                Dictionary<string, JsonArray> jsonNumerics = new Dictionary<string, JsonArray>();
+                Dictionary<string, JsonObject> jsonNumerics = new Dictionary<string, JsonObject>();
                 foreach (var sheet in sheets)
                 {
                     string classTypeStr = sheet.Name?.Value ?? string.Empty;
                     JsonArray? datas = GetDatas(document, sheet);
                     if (datas != null && datas.Count > 0)
-                        jsonNumerics.Add(classTypeStr, datas);
+                    {
+                        var jsonObject = new JsonObject
+                        {
+                            { "Content", datas }
+                        };
+                        jsonNumerics.Add(classTypeStr, jsonObject);
+                    }
                 }
                 return jsonNumerics;
             }
