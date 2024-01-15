@@ -1,4 +1,4 @@
-﻿namespace ReadExcel
+﻿namespace ConfigToolByExcel
 {
     internal struct ClassInfo
     {

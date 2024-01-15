@@ -1,5 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using ReadExcel;
+using ConfigToolByExcel;
 
 // 步骤1.生成代码文件
 var classes = ClassReader.CollectClassesInfo("C:\\Users\\LC-MZHANGXI\\Desktop\\111.xlsx");

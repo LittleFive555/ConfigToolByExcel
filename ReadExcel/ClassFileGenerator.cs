@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace ReadExcel
+namespace ConfigToolByExcel
 {
     internal class ClassFileGenerator
     {

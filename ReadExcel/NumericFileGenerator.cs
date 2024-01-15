@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace ReadExcel
+namespace ConfigToolByExcel
 {
     internal class NumericFileGenerator
     {
