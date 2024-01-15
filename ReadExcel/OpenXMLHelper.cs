@@ -33,7 +33,7 @@ namespace ConfigToolByExcel
 
                 // 如果没有找到工作表，则抛出异常
                 // Throw an exception if there is no sheet.
-                if (theSheet is null || theSheet.Id is null)
+                if (theSheet == null || theSheet.Id == null)
                 {
                     throw new ArgumentException("sheetName");
                 }
@@ -53,19 +53,18 @@ namespace ConfigToolByExcel
             // Use its Worksheet property to get a reference to the cell 
             // whose address matches the address you supplied.
             Cell? theCell = wsPart.Worksheet?.Descendants<Cell>()?.Where(c => c.CellReference == addressName).FirstOrDefault();
-
-            // 如果该单元格不存在，返回空字符串
-            // If the cell does not exist, return an empty string.
-            if (theCell is null || theCell.InnerText.Length > 0)
-            {
-                return string.Empty;
-            }
-
             return GetCellValue(wbPart, theCell);
         }
 
         public static string GetCellValue(WorkbookPart wbPart, Cell theCell)
         {
+            // 如果该单元格不存在，返回空字符串
+            // If the cell does not exist, return an empty string.
+            if (theCell == null || theCell.InnerText.Length <= 0)
+            {
+                return string.Empty;
+            }
+
             string value = theCell.InnerText;
 
             // 如果单元格内是一个整数，结束。
@@ -80,7 +79,7 @@ namespace ConfigToolByExcel
             // looks up the corresponding value in the shared string 
             // table. For Booleans, the code converts the value into 
             // the words TRUE or FALSE.
-            if (theCell.DataType is not null)
+            if (theCell.DataType != null)
             {
                 if (theCell.DataType.Value == CellValues.SharedString)
                 {
@@ -96,7 +95,7 @@ namespace ConfigToolByExcel
                     // is wrong. Return the index that is in
                     // the cell. Otherwise, look up the correct text in 
                     // the table.
-                    if (stringTable is not null)
+                    if (stringTable != null)
                     {
                         value =
                             stringTable.SharedStringTable.ElementAt(int.Parse(value)).InnerText;
@@ -122,7 +121,7 @@ namespace ConfigToolByExcel
         // Given a cell name, parses the specified cell to get the column name.
         public static string GetColumnName(string? cellName)
         {
-            if (cellName is null)
+            if (cellName == null)
             {
                 return string.Empty;
             }
@@ -136,7 +135,7 @@ namespace ConfigToolByExcel
         // Given a cell name, parses the specified cell to get the row index.
         public static uint? GetRowIndex(string? cellName)
         {
-            if (cellName is null)
+            if (cellName == null)
             {
                 return null;
             }
