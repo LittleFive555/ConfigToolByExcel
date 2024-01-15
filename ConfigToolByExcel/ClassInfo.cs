@@ -1,4 +1,6 @@
-﻿namespace ConfigToolByExcel
+﻿using System.Collections.Generic;
+
+namespace ConfigToolByExcel
 {
     internal struct ClassInfo
     {

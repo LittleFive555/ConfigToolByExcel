@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34322.80
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConfigToolByExcel", "ReadExcel\ConfigToolByExcel.csproj", "{7F4CF6CC-4D7A-4F05-B05D-B77E6A141343}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConfigToolByExcel", "ConfigToolByExcel\ConfigToolByExcel.csproj", "{CB649964-BCB6-47B3-BCDD-A76C86042893}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{7F4CF6CC-4D7A-4F05-B05D-B77E6A141343}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7F4CF6CC-4D7A-4F05-B05D-B77E6A141343}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7F4CF6CC-4D7A-4F05-B05D-B77E6A141343}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7F4CF6CC-4D7A-4F05-B05D-B77E6A141343}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CB649964-BCB6-47B3-BCDD-A76C86042893}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CB649964-BCB6-47B3-BCDD-A76C86042893}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CB649964-BCB6-47B3-BCDD-A76C86042893}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CB649964-BCB6-47B3-BCDD-A76C86042893}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {8C240DDC-B0D6-4271-9476-30CEECE47C17}
+		SolutionGuid = {D8EFA7E1-52DA-4C01-8F70-70A47E0E1212}
 	EndGlobalSection
 EndGlobal

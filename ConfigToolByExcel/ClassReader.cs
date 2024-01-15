@@ -1,4 +1,7 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization.Metadata;
 using DocumentFormat.OpenXml.Packaging;
@@ -180,7 +183,7 @@ namespace ConfigToolByExcel
                         var value = Convert.ChangeType(valueText, type); // TODO 是否要转换判断
 
                         // 转换为JsonNode
-                        var jsonNode = JsonSerializer.SerializeToNode(value, JsonTypeInfo.CreateJsonTypeInfo(type, JsonSerializerOptions.Default));
+                        var jsonNode = JsonSerializer.SerializeToNode(value, type);
                         
                         jsonObject.Add(propertyName, jsonNode);
                     }
