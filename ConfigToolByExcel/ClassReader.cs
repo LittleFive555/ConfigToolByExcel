@@ -124,6 +124,10 @@ namespace ConfigToolByExcel
                     propertyInfos.Add(new PropertyInfo() { Name = propertyName, Type = propertyType });
                 }
             }
+
+            if (propertyInfos.Count <= 0) // 没有输出的属性，为空类
+                return null;
+
             classInfo.Properties = propertyInfos;
             return classInfo;
         }
