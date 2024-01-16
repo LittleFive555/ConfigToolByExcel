@@ -22,6 +22,8 @@ namespace ConfigToolByExcel
 
         private const string JsonObjectName = "Content";
 
+        private const string ArraySplitSymbol = "#";
+
         public static IReadOnlyList<ClassInfo>? CollectClassesInfo(string docName)
         {
             using (SpreadsheetDocument document = SpreadsheetDocument.Open(docName, false))
@@ -179,7 +181,23 @@ namespace ConfigToolByExcel
                         // 获取数据并转换类型
                         uint valueRowIndex = OpenXMLHelper.GetRowIndex(cell.CellReference?.Value) ?? 0;
                         string valueText = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + valueRowIndex);
-                        var value = Convert.ChangeType(valueText, type); // TODO 是否要转换判断
+                        object value;
+                        if (type.IsArray)
+                        {
+                            var elementType = type.GetElementType();
+                            var splitedElementsText = valueText.Split(ArraySplitSymbol);
+                            Array array = Array.CreateInstance(elementType, splitedElementsText.Length);
+                            for (int i = 0; i < splitedElementsText.Length; i++)
+                            {
+                                var elementValue = Convert.ChangeType(splitedElementsText[i], elementType); // TODO 是否要转换判断
+                                array.SetValue(elementValue, i);
+                            }
+                            value = array;
+                        }
+                        else
+                        {
+                            value = Convert.ChangeType(valueText, type); // TODO 是否要转换判断
+                        }
 
                         // 转换为JsonNode
                         var jsonNode = JsonSerializer.SerializeToNode(value, type);
@@ -202,6 +220,12 @@ namespace ConfigToolByExcel
                     return "System.Single";
                 case "string":
                     return "System.String";
+                case "int[]":
+                    return "System.Int32[]";
+                case "float[]":
+                    return "System.Single[]";
+                case "string[]":
+                    return "System.String[]";
             }
             return string.Empty;
         }
