@@ -168,10 +168,12 @@ namespace ConfigToolByExcel
                         string columnName = propertyNameToColumn[propertyName];
                         string propertyValueTypeText = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + PropertyTypeRowIndex);
                         string valueText = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + valueRowIndex);
+                        if (string.IsNullOrEmpty(valueText)) // 对应格子未配备时，使用默认值
+                            valueText = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + DefaultValueRowIndex);
                         // 获取数据类型和值
                         if (!ValueConverter.TryConvertValue(propertyValueTypeText, valueText, out Type? type, out object? value))
                             throw new InvalidCastException($"Invalid value type <{propertyValueTypeText}>.");
-                       
+
                         // 转换为JsonNode
                         var jsonNode = JsonSerializer.SerializeToNode(value, type);
                         jsonObject.Add(propertyName, jsonNode);
