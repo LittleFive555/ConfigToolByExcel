@@ -22,8 +22,6 @@ namespace ConfigToolByExcel
 
         private const string JsonObjectName = "Content";
 
-        private const string ArraySplitSymbol = "#";
-
         public static IReadOnlyList<ClassInfo>? CollectClassesInfo(string docName)
         {
             using (SpreadsheetDocument document = SpreadsheetDocument.Open(docName, false))
@@ -164,70 +162,24 @@ namespace ConfigToolByExcel
                 if (IsOutput(OpenXMLHelper.GetCellValue(wbPart, cell)))
                 {
                     JsonObject jsonObject = new JsonObject();
+                    uint valueRowIndex = OpenXMLHelper.GetRowIndex(cell.CellReference?.Value) ?? 0;
                     foreach (var propertyName in propertyNameToColumn.Keys)
                     {
                         string columnName = propertyNameToColumn[propertyName];
-
-                        // 获取数据类型
                         string propertyValueTypeText = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + PropertyTypeRowIndex);
-                        string fullTypeName = GetFullTypeName(propertyValueTypeText);
-                        Type? type = Type.GetType(fullTypeName);
-                        if (type == null)
-                        {
-                            Console.WriteLine($"Error: Didn't find type <{propertyValueTypeText}>.");
-                            return null;
-                        }
-
-                        // 获取数据并转换类型
-                        uint valueRowIndex = OpenXMLHelper.GetRowIndex(cell.CellReference?.Value) ?? 0;
                         string valueText = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + valueRowIndex);
-                        object value;
-                        if (type.IsArray)
-                        {
-                            var elementType = type.GetElementType();
-                            var splitedElementsText = valueText.Split(ArraySplitSymbol);
-                            Array array = Array.CreateInstance(elementType, splitedElementsText.Length);
-                            for (int i = 0; i < splitedElementsText.Length; i++)
-                            {
-                                var elementValue = Convert.ChangeType(splitedElementsText[i], elementType); // TODO 是否要转换判断
-                                array.SetValue(elementValue, i);
-                            }
-                            value = array;
-                        }
-                        else
-                        {
-                            value = Convert.ChangeType(valueText, type); // TODO 是否要转换判断
-                        }
-
+                        // 获取数据类型和值
+                        if (!ValueConverter.TryConvertValue(propertyValueTypeText, valueText, out Type? type, out object? value))
+                            throw new InvalidCastException($"Invalid value type <{propertyValueTypeText}>.");
+                       
                         // 转换为JsonNode
                         var jsonNode = JsonSerializer.SerializeToNode(value, type);
-                        
                         jsonObject.Add(propertyName, jsonNode);
                     }
                     jsonArray.Add(jsonObject);
                 }
             }
             return jsonArray;
-        }
-
-        private static string GetFullTypeName(string input)
-        {
-            switch(input)
-            {
-                case "int":
-                    return "System.Int32";
-                case "float":
-                    return "System.Single";
-                case "string":
-                    return "System.String";
-                case "int[]":
-                    return "System.Int32[]";
-                case "float[]":
-                    return "System.Single[]";
-                case "string[]":
-                    return "System.String[]";
-            }
-            return string.Empty;
         }
 
         private static bool IsOutput(string? cellValue)
