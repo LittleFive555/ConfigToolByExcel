@@ -55,7 +55,7 @@ namespace ConfigToolByExcel
             }
         }
 
-        public static Dictionary<string, JsonObject>? CollectNumeric(string docName)
+        public static Dictionary<string, JsonObject>? CollectData(string docName)
         {
             using (SpreadsheetDocument document = SpreadsheetDocument.Open(docName, false))
             {
@@ -65,7 +65,7 @@ namespace ConfigToolByExcel
 
                 // 一个工作簿中可能包含多个工作表，一个工作表为一个配置类
                 // 字典的key为类名（与工作表名相同），value为数据转换后的JsonObject对象
-                Dictionary<string, JsonObject> jsonNumerics = new Dictionary<string, JsonObject>();
+                Dictionary<string, JsonObject> jsonDatas = new Dictionary<string, JsonObject>();
 
                 foreach (var sheet in sheets)
                 {
@@ -78,11 +78,11 @@ namespace ConfigToolByExcel
                     if (datas != null && datas.Count > 0)
                     {
                         var jsonObject = new JsonObject{ { JsonObjectName, datas } };
-                        jsonNumerics.Add(classTypeStr, jsonObject);
+                        jsonDatas.Add(classTypeStr, jsonObject);
                     }
                 }
 
-                return jsonNumerics;
+                return jsonDatas;
             }
         }
 

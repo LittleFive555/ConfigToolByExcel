@@ -4,9 +4,9 @@ using System.Text.Json.Nodes;
 
 namespace ConfigToolByExcel
 {
-    internal class NumericFileGenerator
+    internal class DataFileGenerator
     {
-        public static void GenerateNumericFile(string fileName, JsonNode datas, string outputPath)
+        public static void GenerateDataFile(string fileName, JsonNode datas, string outputPath)
         {
             string fullPath = Path.Combine(outputPath, string.Format("{0}.num", fileName));
             if (File.Exists(fullPath))

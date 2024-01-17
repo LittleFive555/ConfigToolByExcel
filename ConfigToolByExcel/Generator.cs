@@ -39,11 +39,11 @@ namespace ConfigToolByExcel
                 if (!fullPath.EndsWith(".xlsx"))
                     continue;
 
-                var datas = ClassReader.CollectNumeric(fullPath);
+                var datas = ClassReader.CollectData(fullPath);
                 if (datas != null)
                 {
                     foreach (var data in datas)
-                        NumericFileGenerator.GenerateNumericFile(data.Key, data.Value, dataOutputFolderPath);
+                        DataFileGenerator.GenerateDataFile(data.Key, data.Value, dataOutputFolderPath);
                 }
             }
         }
