@@ -11,10 +11,10 @@
 
   <ItemGroup>
     <Reference Include="UnityEditor">
-      <HintPath>..\..\..\Unity\Unity 2021.3.29f1\Editor\Data\Managed\UnityEditor.dll</HintPath>
+      <HintPath>UnityDll\UnityEditor.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\Unity\Unity 2021.3.29f1\Editor\Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>UnityDll\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
 
