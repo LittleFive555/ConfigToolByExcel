@@ -9,7 +9,7 @@ namespace ConfigToolByExcel
         /// </summary>
         /// <param name="excelFilePath">Excel文件所在目录的路径</param>
         /// <param name="codeOutputFolderPath">生成的代码文件的输出路径</param>
-        public static void GenerateClass(string excelFilePath, string codeOutputFolderPath)
+        public static void GenerateClass(string excelFilePath, string codeOutputFolderPath, string namespaceString)
         {
             var fileFullPaths = Directory.GetFiles(excelFilePath);
             foreach (var fullPath in fileFullPaths)
@@ -21,7 +21,7 @@ namespace ConfigToolByExcel
                 if (classes != null)
                 {
                     foreach (var classInfo in classes)
-                        ClassFileGenerator.GenerateClassFile(classInfo, codeOutputFolderPath);
+                        ClassFileGenerator.GenerateClassFile(namespaceString, classInfo, codeOutputFolderPath);
                 }
             }
         }

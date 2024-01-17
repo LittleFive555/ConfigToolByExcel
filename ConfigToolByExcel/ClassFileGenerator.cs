@@ -6,10 +6,9 @@ namespace ConfigToolByExcel
     internal class ClassFileGenerator
     {
         private const int SpaceCountPerLevel = 4;
-        private const string NamespaceStr = "ReadExcel";
         private const string BaseClassName = "BaseData";
 
-        public static void GenerateClassFile(ClassInfo classInfo, string outputPath)
+        public static void GenerateClassFile(string namespaceString, ClassInfo classInfo, string outputPath)
         {
             string fileName = string.Format("{0}.cs", classInfo.ClassName);
             string fullPath = Path.Combine(outputPath, fileName);
@@ -19,30 +18,54 @@ namespace ConfigToolByExcel
 
             using (FileStream fileStream = File.Create(fullPath))
             {
-                AddLine(fileStream, 0, "using System;");
-                AddLine(fileStream, 0, string.Empty);
+                int level = 0;
+                AddLine(fileStream, level, "using System;");
+                AddLine(fileStream, level, string.Empty);
 
-                AddLine(fileStream, 0, string.Format("namespace {0}", NamespaceStr));
-                AddLine(fileStream, 0, "{");
+                // namespace start
+                if (!string.IsNullOrEmpty(namespaceString))
+                {
+                    AddLine(fileStream, level, string.Format("namespace {0}", namespaceString));
+                    AddLine(fileStream, level, "{");
+                    level++;
+                }
 
-                AddLine(fileStream, 1, "[Serializable]");
+                // class start
+                AddLine(fileStream, level, "[Serializable]");
                 if (classInfo.ClassName.Equals(BaseClassName))
-                    AddLine(fileStream, 1, string.Format("public class {0}", classInfo.ClassName));
+                    AddLine(fileStream, level, string.Format("public class {0}", classInfo.ClassName));
                 else
-                    AddLine(fileStream, 1, string.Format("public class {0} : {1}", classInfo.ClassName, BaseClassName));
-                AddLine(fileStream, 1, "{");
+                    AddLine(fileStream, level, string.Format("public class {0} : {1}", classInfo.ClassName, BaseClassName));
+                AddLine(fileStream, level, "{");
+                level++;
+
+                // property start
                 foreach (PropertyInfo fieldInfo in classInfo.Properties)
-                    AddLine(fileStream, 2, $"public {fieldInfo.Type} {fieldInfo.Name};");
-                AddLine(fileStream, 1, "}");
+                    AddLine(fileStream, level, $"public {fieldInfo.Type} {fieldInfo.Name};");
+                // property end
 
-                AddLine(fileStream, 1, string.Empty);
+                level--;
+                AddLine(fileStream, level, "}");
 
-                AddLine(fileStream, 1, string.Format("public class N{0}List", classInfo.ClassName));
-                AddLine(fileStream, 1, "{");
-                AddLine(fileStream, 2, string.Format("public {0}[] Content;", classInfo.ClassName));
-                AddLine(fileStream, 1, "}");
+                AddLine(fileStream, level, string.Empty);
 
-                AddLine(fileStream, 0, "}");
+                // class start
+                AddLine(fileStream, level, string.Format("public class N{0}List", classInfo.ClassName));
+                AddLine(fileStream, level, "{");
+
+                level++;
+                // property start
+                AddLine(fileStream, level, string.Format("public {0}[] Content;", classInfo.ClassName));
+                // property end
+
+                level--;
+                AddLine(fileStream, level, "}");
+                // class end
+
+                level--;
+                // namespace end
+                if (!string.IsNullOrEmpty(namespaceString))
+                    AddLine(fileStream, level, "}");
             }
         }
 
