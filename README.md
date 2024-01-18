@@ -1,6 +1,6 @@
 # README
 
-ConfigToolByExcel是一个用于Unity的配置表工具，可以将按照一定格式配置的Excel表格进行解析，生成C#类代码，并将数据转换为Json格式的文件，以供Unity项目读取。
+ConfigToolByExcel是一个用于Unity的Excel配置表工具，可以将按照一定格式配置的Excel表格进行解析，生成C#类代码，并将数据转换为Json格式的文件，以供Unity项目读取。
 
 ## 依赖
 
@@ -66,6 +66,7 @@ ConfigToolByExcel是一个用于Unity的配置表工具，可以将按照一定�
 #### 使用导出的dll
 
 1. 下载最新的Release包，将解压出的ConfigToolByExcel文件夹直接拖入Unity项目的任意位置。
+2. 建议将导入的所有.dll通过Inspector面板修改为只在Editor下包含，即Select platform for plugin下，取消Any Platform，然后只保留Editor的选项。
 
 ### 生成代码及数据
 
@@ -79,8 +80,12 @@ ConfigToolByExcel是一个用于Unity的配置表工具，可以将按照一定�
    /// </summary>
    /// <param name="excelFilePath">Excel文件所在目录的路径</param>
    /// <param name="codeOutputFolderPath">生成的代码文件的输出路径</param>
+   /// <param name="namespaceString">生成代码的命名空间，如果为空，则没有命名空间</param>
    public static void GenerateClass(string excelFilePath, string codeOutputFolderPath, string namespaceString)
    ```
+   - excelFilePath为Excel，Excel文件所在的文件夹绝对路径，调用时会将该路径下所有的Excel文件（.xlsx后缀）进行遍历和处理。
+   - codeOutputFolderPath，代码文件的输出绝对路径，建议为Unity项目Assets文件夹下自定义路径，**需要事先创建好文件夹**。
+   - namespaceString，生成代码的实体类所属的命名空间，如果为空，则没有命名空间。
 
 2. 调用`Generator.GenerateData()`方法生成Json文件。
 
@@ -92,15 +97,57 @@ ConfigToolByExcel是一个用于Unity的配置表工具，可以将按照一定�
    /// <param name="dataOutputFolderPath">生成的数据Json文件的输出路径</param>
    public static void GenerateData(string excelFilePath, string dataOutputFolderPath)
    ```
+   - excelFilePath为Excel，Excel文件所在的文件夹绝对路径，调用时会将该路径下所有的Excel文件（.xlsx后缀）进行遍历和处理。
+   - codeOutputFolderPath，Json数据文件的输出绝对路径，建议为Unity项目Assets/StreamingAssets文件夹下新建一个文件夹，**需要事先创建好文件夹**。
+   
+   输出的Json数据文件后缀为.num。
 
 #### 使用预制的编辑器窗口
 
-点击Unity菜单栏的Config > Open Config Window菜单项，即可打开编辑器窗口。
+1. 首次使用，需要在Unity项目Assets文件夹下新建一个目录Data，用于存放编辑器窗口的配置信息，
+2. 点击Unity菜单栏的Config > Open Config Window菜单项，即可打开编辑器窗口。
+3. 按照编辑器字段，依次填写路径等信息，填写后点击保存配置信息，可以单独输出类代码或者Json数据文件，也可以一键输出类代码和数据文件。
+4. 在首次使用填写好路径并保存配置后，可以直接点击Unity菜单栏的Config > Generate All菜单项，直接生成类代码和数据文件。
 
 ### 读取数据
 
 以下是一段简单的数据读取代码，之后会实现一个较为完备的读取类：
 
 ```c#
+using ConfigData;
+using System;
+using System.IO;
+using System.Linq;
+using UnityEngine;
+
+public class ConfigDataManager<T> where T : BaseData
+{
+    private const string ConfigClassNamespace = "ReadExcel";
+
+    private const string FolderName = "ConfigData";
+
+    public static T GetData(int NID)
+    {
+        string typeName = typeof(T).Name;
+        string rawText = ReadRawText($"{typeName}.num");
+        var type = Type.GetType(string.Format("{0}.N{1}List", ConfigClassNamespace, typeName));
+        var obj = JsonUtility.FromJson(rawText, type);
+        var property = obj.GetType().GetField("Content");
+        T[] content = (T[])property.GetValue(obj);
+        return content.Where((data) => data.NID == NID).First();
+    }
+
+    private static string ReadRawText(string fileName)
+    {
+        string readData;
+        string fileFullPath = Path.Combine(Application.streamingAssetsPath, FolderName, fileName);
+        using (StreamReader sr = File.OpenText(fileFullPath))
+        {
+            readData = sr.ReadToEnd();
+            sr.Close();
+        }
+        return readData;
+    }
+}
 ```
 
