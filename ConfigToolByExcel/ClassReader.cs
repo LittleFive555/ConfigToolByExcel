@@ -33,12 +33,12 @@ namespace ConfigToolByExcel
                 List<ClassInfo> classesInfo = new List<ClassInfo>();
 
                 // 添加基类信息
-                ClassInfo baseDataInfo = new ClassInfo() 
-                { 
+                ClassInfo baseDataInfo = new ClassInfo()
+                {
                     ClassName = "BaseData",
-                    Properties = new List<PropertyInfo>() 
+                    Properties = new List<PropertyInfo>()
                     {
-                        new PropertyInfo() { Type = "int", Name = "NID" } 
+                        new PropertyInfo() { Type = "int", Name = "NID" }
                     }
                 };
                 classesInfo.Add(baseDataInfo);
@@ -77,7 +77,7 @@ namespace ConfigToolByExcel
                     // 将配置数据转换为json格式
                     if (datas != null && datas.Count > 0)
                     {
-                        var jsonObject = new JsonObject{ { JsonObjectName, datas } };
+                        var jsonObject = new JsonObject { { JsonObjectName, datas } };
                         jsonDatas.Add(classTypeStr, jsonObject);
                     }
                 }
