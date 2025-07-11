@@ -8,7 +8,7 @@ ConfigToolByExcel是一个用于Unity的Excel配置表工具，可以将按照�
 
 - DocumentFormat.OpenXML 3.0.1
 
-- System.Text.Json 8.0.1
+- System.Text.Json 9.0.7
 
 ## 项目结构
 
