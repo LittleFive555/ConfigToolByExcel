@@ -12,6 +12,7 @@ namespace ConfigToolByExcel
         /// <param name="namespaceString">生成代码的命名空间，如果为空，则没有命名空间</param>
         public static void GenerateClass(string excelFilePath, string codeOutputFolderPath, string namespaceString)
         {
+            Directory.CreateDirectory(codeOutputFolderPath);
             var fileFullPaths = Directory.GetFiles(excelFilePath);
             foreach (var fullPath in fileFullPaths)
             {
@@ -34,6 +35,7 @@ namespace ConfigToolByExcel
         /// <param name="dataOutputFolderPath">生成的数据Json文件的输出路径</param>
         public static void GenerateData(string excelFilePath, string dataOutputFolderPath)
         {
+            Directory.CreateDirectory(dataOutputFolderPath);
             var fileFullPaths = Directory.GetFiles(excelFilePath);
             foreach (var fullPath in fileFullPaths)
             {
