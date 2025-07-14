@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ConfigToolByExcel": {
+      "commandName": "Project",
+      "commandLineArgs": "--excel F:\\UnityCustomPackages\\Configs --code-out F:\\DouDizhu\\DouDizhuClient\\Assets\\Scripts\\Configs --code-namespace Configs --json-out F:\\DouDizhu\\DouDizhuClient\\Assets\\StreamingAssets\\Configs"
+    }
+  }
+}
