@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
@@ -20,6 +21,9 @@ namespace ConfigToolByExcel
         private const string JsonObjectName = "Content";
 
         private const string BaseClassName = "BaseData";
+
+        private static readonly Regex ClassNameRegex = new Regex("^[A-Z][A-Za-z0-9_]*");
+        private static readonly Regex PropertyNameRegex = new Regex("^[A-Z][A-Za-z0-9_]*");
 
         // 添加基类信息
         private static readonly ClassInfo BaseDataInfo = new ClassInfo()
@@ -107,7 +111,9 @@ namespace ConfigToolByExcel
                 Console.WriteLine("Error: A sheet has no name.");
                 return null;
             }
-            // TODO 对类名规范进行判断
+            // 对类名规范进行判断
+            if (!IsValidClassName(sheet.Name.Value))
+                throw new FormatException($"Invalid class name <{sheet.Name.Value}>. Regex pattern {ClassNameRegex}");
             classInfo.ClassName = string.Format("D{0}", sheet.Name.Value);
 
             List<PropertyInfo> propertyInfos = new List<PropertyInfo>();
@@ -117,10 +123,14 @@ namespace ConfigToolByExcel
                 if (IsOutput(OpenXMLHelper.GetCellValue(wbPart, outputSymbolCell)))
                 {
                     string columnName = OpenXMLHelper.GetColumnName(outputSymbolCell.CellReference?.Value);
-                    // TODO 对属性名规范进行判断
                     string propertyName = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + PropertyNameCellRowIndex);
-                    // TODO 对类型进行判断
+                    // 对属性名规范进行判断
+                    if (!IsValidPropertyName(propertyName))
+                        throw new FormatException($"Invalid property name <{propertyName}> in class <{classInfo.ClassName}>. Regex pattern {PropertyNameRegex}");
                     string propertyType = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + PropertyTypeRowIndex);
+                    // 对属性类型规范进行判断
+                    if (!ValueConverter.IsValidType(propertyType))
+                        throw new InvalidCastException($"Invalid property type <{propertyType}> for property <{propertyName}> in class <{classInfo.ClassName}>.");
                     propertyInfos.Add(new PropertyInfo() { Name = propertyName, Type = propertyType });
                 }
             }
@@ -145,6 +155,16 @@ namespace ConfigToolByExcel
             if (propertyOutputSymbolCells.Count() == 0) // 空表
                 return null;
 
+            // 以工作表名作为类名
+            if (string.IsNullOrEmpty(sheet?.Name?.Value))
+            {
+                Console.WriteLine("Error: A sheet has no name.");
+                return null;
+            }
+            // 对类名规范进行判断
+            if (!IsValidClassName(sheet.Name.Value))
+                throw new FormatException($"Invalid class name <{sheet.Name.Value}>. Regex pattern {ClassNameRegex}");
+
             // 构建字段名到表格列的索引
             Dictionary<string, string> propertyNameToColumn = new Dictionary<string, string>();
             foreach (var outputSymbolCell in propertyOutputSymbolCells)
@@ -152,8 +172,10 @@ namespace ConfigToolByExcel
                 if (IsOutput(OpenXMLHelper.GetCellValue(wbPart, outputSymbolCell)))
                 {
                     string columnName = OpenXMLHelper.GetColumnName(outputSymbolCell.CellReference?.Value);
-                    // TODO 对属性名规范进行判断
                     string propertyName = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + PropertyNameCellRowIndex);
+                    // 对属性名规范进行判断
+                    if (!IsValidPropertyName(propertyName))
+                        throw new FormatException($"Invalid property name <{propertyName}> in class <{sheet.Name.Value}>. Regex pattern {PropertyNameRegex}.");
                     propertyNameToColumn.Add(propertyName, columnName);
                 }
             }
@@ -194,6 +216,16 @@ namespace ConfigToolByExcel
                 return false;
 
             return cellValue.Equals(OutputSymbol);
+        }
+
+        private static bool IsValidClassName(string str)
+        {
+            return ClassNameRegex.IsMatch(str);
+        }
+
+        private static bool IsValidPropertyName(string str)
+        {
+            return PropertyNameRegex.IsMatch(str);
         }
     }
 }

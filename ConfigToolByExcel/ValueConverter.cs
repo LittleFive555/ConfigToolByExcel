@@ -22,6 +22,11 @@
 
         private const string ArraySplitSymbol = "#";
 
+        public static bool IsValidType(string valueTypeText)
+        {
+            return m_converters.ContainsKey(valueTypeText);
+        }
+
         public static bool TryConvertValue(string valueTypeText, string valueText, out Type? type, out object? value)
         {
             if (m_converters.ContainsKey(valueTypeText))
