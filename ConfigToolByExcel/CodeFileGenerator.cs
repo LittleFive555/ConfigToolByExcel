@@ -1,14 +1,12 @@
-﻿using System.IO;
-using System.Text;
+﻿using System.Text;
 
 namespace ConfigToolByExcel
 {
-    internal class ClassFileGenerator
+    internal class CodeFileGenerator
     {
         private const int SpaceCountPerLevel = 4;
-        private const string BaseClassName = "BaseData";
 
-        public static void GenerateClassFile(string namespaceString, ClassInfo classInfo, string outputPath)
+        public static void GenerateCSharpFile(string namespaceString, ClassInfo classInfo, string outputPath)
         {
             string fileName = string.Format("{0}.cs", classInfo.ClassName);
             string fullPath = Path.Combine(outputPath, fileName);
@@ -32,16 +30,19 @@ namespace ConfigToolByExcel
 
                 // class start
                 AddLine(fileStream, level, "[Serializable]");
-                if (classInfo.ClassName.Equals(BaseClassName))
+                if (string.IsNullOrEmpty(classInfo.ParentClassName))
                     AddLine(fileStream, level, string.Format("public class {0}", classInfo.ClassName));
                 else
-                    AddLine(fileStream, level, string.Format("public class {0} : {1}", classInfo.ClassName, BaseClassName));
+                    AddLine(fileStream, level, string.Format("public class {0} : {1}", classInfo.ClassName, classInfo.ParentClassName));
                 AddLine(fileStream, level, "{");
                 level++;
 
                 // property start
-                foreach (PropertyInfo fieldInfo in classInfo.Properties)
-                    AddLine(fileStream, level, $"public {fieldInfo.Type} {fieldInfo.Name};");
+                if (classInfo.Properties != null)
+                {
+                    foreach (PropertyInfo fieldInfo in classInfo.Properties)
+                        AddLine(fileStream, level, $"public {fieldInfo.Type} {fieldInfo.Name};");
+                }
                 // property end
 
                 level--;
@@ -50,7 +51,7 @@ namespace ConfigToolByExcel
                 AddLine(fileStream, level, string.Empty);
 
                 // class start
-                AddLine(fileStream, level, string.Format("public class N{0}List", classInfo.ClassName));
+                AddLine(fileStream, level, string.Format("public class {0}List", classInfo.ClassName));
                 AddLine(fileStream, level, "{");
 
                 level++;

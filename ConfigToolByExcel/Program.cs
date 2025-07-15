@@ -34,7 +34,7 @@ namespace ConfigToolByExcel
                 DirectoryInfo excel = parseResult.GetRequiredValue(excelDirectoryOption);
                 DirectoryInfo codeOut = parseResult.GetRequiredValue(codeOutDirectoryOption);
                 string codeNamespace = parseResult.GetRequiredValue(codeNamespaceOption);
-                Generator.GenerateClass(excel.FullName, codeOut.FullName, codeNamespace);
+                Commands.GenerateClass(excel.FullName, codeOut.FullName, codeNamespace);
             });
 
             // JSON 文件生成命令
@@ -52,7 +52,7 @@ namespace ConfigToolByExcel
             {
                 DirectoryInfo excel = parseResult.GetRequiredValue(excelDirectoryOption);
                 DirectoryInfo jsonOut = parseResult.GetRequiredValue(jsonOutDirectoryOption);
-                Generator.GenerateData(excel.FullName, jsonOut.FullName);
+                Commands.GenerateData(excel.FullName, jsonOut.FullName);
             });
 
             RootCommand rootCommand = new RootCommand("Excel to json and code generator");

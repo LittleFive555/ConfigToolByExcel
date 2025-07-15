@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace ConfigToolByExcel
 {
-    internal class ClassReader
+    internal class ExcelReader
     {
         private const string OutputSymbol = "*";
         private const int PropertyOutputSymbolRowIndex = 1;
@@ -22,6 +19,14 @@ namespace ConfigToolByExcel
 
         private const string JsonObjectName = "Content";
 
+        private const string BaseClassName = "BaseData";
+
+        // 添加基类信息
+        private static readonly ClassInfo BaseDataInfo = new ClassInfo()
+        {
+            ClassName = BaseClassName
+        };
+
         public static IReadOnlyList<ClassInfo>? CollectClassesInfo(string docName)
         {
             using (SpreadsheetDocument document = SpreadsheetDocument.Open(docName, false))
@@ -31,17 +36,6 @@ namespace ConfigToolByExcel
                     return null;
 
                 List<ClassInfo> classesInfo = new List<ClassInfo>();
-
-                // 添加基类信息
-                ClassInfo baseDataInfo = new ClassInfo()
-                {
-                    ClassName = "BaseData",
-                    Properties = new List<PropertyInfo>()
-                    {
-                        new PropertyInfo() { Type = "int", Name = "NID" }
-                    }
-                };
-                classesInfo.Add(baseDataInfo);
 
                 // 从配置表中获取自定义的配置类信息，一个工作表代表一个类
                 foreach (var sheet in sheets)
@@ -53,6 +47,11 @@ namespace ConfigToolByExcel
 
                 return classesInfo;
             }
+        }
+
+        public static ClassInfo GetBaseClassInfo()
+        {
+            return BaseDataInfo;
         }
 
         public static Dictionary<string, JsonObject>? CollectData(string docName)
@@ -88,7 +87,10 @@ namespace ConfigToolByExcel
 
         private static ClassInfo? GetClassInfo(SpreadsheetDocument document, Sheet sheet)
         {
-            ClassInfo classInfo = new ClassInfo();
+            ClassInfo classInfo = new ClassInfo()
+            {
+                ParentClassName = BaseDataInfo.ClassName,
+            };
             string? id = sheet.Id;
             if (id == null)
                 throw new NullReferenceException(string.Format("Error: Sheet {0} has no id.", sheet.Name));
@@ -106,7 +108,7 @@ namespace ConfigToolByExcel
                 return null;
             }
             // TODO 对类名规范进行判断
-            classInfo.ClassName = sheet.Name.Value;
+            classInfo.ClassName = string.Format("D{0}", sheet.Name.Value);
 
             List<PropertyInfo> propertyInfos = new List<PropertyInfo>();
             // 获取所有输出的属性名及数据类型
@@ -117,8 +119,6 @@ namespace ConfigToolByExcel
                     string columnName = OpenXMLHelper.GetColumnName(outputSymbolCell.CellReference?.Value);
                     // TODO 对属性名规范进行判断
                     string propertyName = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + PropertyNameCellRowIndex);
-                    if (propertyName.Equals("NID")) // 基类包含，直接跳过
-                        continue;
                     // TODO 对类型进行判断
                     string propertyType = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + PropertyTypeRowIndex);
                     propertyInfos.Add(new PropertyInfo() { Name = propertyName, Type = propertyType });

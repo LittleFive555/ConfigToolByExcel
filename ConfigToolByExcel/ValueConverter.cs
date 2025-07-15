@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace ConfigToolByExcel
+﻿namespace ConfigToolByExcel
 {
     public delegate void CustomConverter(string valueText, out Type type, out object value);
 

@@ -1,8 +1,6 @@
-﻿using System.IO;
-
-namespace ConfigToolByExcel
+﻿namespace ConfigToolByExcel
 {
-    public class Generator
+    public class Commands
     {
         /// <summary>
         /// 生成代码文件
@@ -13,17 +11,20 @@ namespace ConfigToolByExcel
         public static void GenerateClass(string excelFilePath, string codeOutputFolderPath, string namespaceString)
         {
             Directory.CreateDirectory(codeOutputFolderPath);
+
+            CodeFileGenerator.GenerateCSharpFile(namespaceString, ExcelReader.GetBaseClassInfo(), codeOutputFolderPath);
+
             var fileFullPaths = Directory.GetFiles(excelFilePath);
             foreach (var fullPath in fileFullPaths)
             {
                 if (!fullPath.EndsWith(".xlsx"))
                     continue;
 
-                var classes = ClassReader.CollectClassesInfo(fullPath);
+                var classes = ExcelReader.CollectClassesInfo(fullPath);
                 if (classes != null)
                 {
                     foreach (var classInfo in classes)
-                        ClassFileGenerator.GenerateClassFile(namespaceString, classInfo, codeOutputFolderPath);
+                        CodeFileGenerator.GenerateCSharpFile(namespaceString, classInfo, codeOutputFolderPath);
                 }
             }
         }
@@ -42,7 +43,7 @@ namespace ConfigToolByExcel
                 if (!fullPath.EndsWith(".xlsx"))
                     continue;
 
-                var datas = ClassReader.CollectData(fullPath);
+                var datas = ExcelReader.CollectData(fullPath);
                 if (datas != null)
                 {
                     foreach (var data in datas)

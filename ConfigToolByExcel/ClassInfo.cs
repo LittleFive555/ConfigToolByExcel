@@ -1,10 +1,9 @@
-﻿using System.Collections.Generic;
-
-namespace ConfigToolByExcel
+﻿namespace ConfigToolByExcel
 {
     internal struct ClassInfo
     {
         public string ClassName;
+        public string ParentClassName;
         public IReadOnlyList<PropertyInfo> Properties;
     }
 
