@@ -70,6 +70,42 @@ namespace ConfigToolByExcel
             }
         }
 
+        public static void GenerateGoFile(string packageName, ClassInfo classInfo, string outputPath)
+        {
+            string fileName = string.Format("{0}.go", classInfo.ClassName);
+            string fullPath = Path.Combine(outputPath, fileName);
+            // 如果文件存在，先删除
+            if (File.Exists(fullPath))
+                File.Delete(fullPath);
+            using (FileStream fileStream = File.Create(fullPath))
+            {
+                int level = 0;
+                AddLine(fileStream, level, string.Format("package {0}", packageName));
+                AddLine(fileStream, level, string.Empty);
+                // struct start
+                AddLine(fileStream, level, string.Format("type {0} struct {{", classInfo.ClassName));
+                level++;
+                // property start
+                if (classInfo.Properties != null)
+                {
+                    foreach (PropertyInfo fieldInfo in classInfo.Properties)
+                        AddLine(fileStream, level, $"{fieldInfo.Name} {fieldInfo.Type}");
+                }
+                // property end
+                level--;
+                AddLine(fileStream, level, "}");
+
+                AddLine(fileStream, level, string.Empty);
+
+                AddLine(fileStream, level, string.Format("type {0}List struct {{", classInfo.ClassName));
+                level++;
+                AddLine(fileStream, level, string.Format("Content {0}[]", classInfo.ClassName));
+                level--;
+                AddLine(fileStream, level, "}");
+
+            }
+        }
+
         private static void AddLine(FileStream fs, int level, string value)
         {
             StringBuilder lineStr = new StringBuilder();

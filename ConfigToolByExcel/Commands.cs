@@ -8,7 +8,7 @@
         /// <param name="excelFilePath">Excel文件所在目录的路径</param>
         /// <param name="codeOutputFolderPath">生成的代码文件的输出路径</param>
         /// <param name="namespaceString">生成代码的命名空间，如果为空，则没有命名空间</param>
-        public static void GenerateClass(string excelFilePath, string codeOutputFolderPath, string namespaceString)
+        public static void GenerateCSharpFiles(string excelFilePath, string codeOutputFolderPath, string namespaceString)
         {
             Directory.CreateDirectory(codeOutputFolderPath);
 
@@ -25,6 +25,23 @@
                 {
                     foreach (var classInfo in classes)
                         CodeFileGenerator.GenerateCSharpFile(namespaceString, classInfo, codeOutputFolderPath);
+                }
+            }
+        }
+
+        public static void GenerateGoFiles(string excelFilePath, string codeOutputFolderPath, string packageName)
+        {
+            Directory.CreateDirectory(codeOutputFolderPath);
+            var fileFullPaths = Directory.GetFiles(excelFilePath);
+            foreach (var fullPath in fileFullPaths)
+            {
+                if (!fullPath.EndsWith(".xlsx"))
+                    continue;
+                var classes = ExcelReader.CollectClassesInfo(fullPath);
+                if (classes != null)
+                {
+                    foreach (var classInfo in classes)
+                        CodeFileGenerator.GenerateGoFile(packageName, classInfo, codeOutputFolderPath);
                 }
             }
         }

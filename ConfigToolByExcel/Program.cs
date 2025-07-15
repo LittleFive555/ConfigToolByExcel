@@ -20,7 +20,7 @@ namespace ConfigToolByExcel
             };
             Option<string> codeNamespaceOption = new Option<string>("--code-namespace")
             {
-                Description = "The namespace for the generated code.",
+                Description = "The namespace of the generated code.",
                 Required = true,
             };
             Command csharpCommand = new Command("csharp", "Generate C# classes.")
@@ -34,7 +34,27 @@ namespace ConfigToolByExcel
                 DirectoryInfo excel = parseResult.GetRequiredValue(excelDirectoryOption);
                 DirectoryInfo codeOut = parseResult.GetRequiredValue(codeOutDirectoryOption);
                 string codeNamespace = parseResult.GetRequiredValue(codeNamespaceOption);
-                Commands.GenerateClass(excel.FullName, codeOut.FullName, codeNamespace);
+                Commands.GenerateCSharpFiles(excel.FullName, codeOut.FullName, codeNamespace);
+            });
+
+            // Go 代码生成命令
+            Option<string> codePackageOption = new Option<string>("--code-package")
+            {
+                Description = "The package name of the generated code.",
+                Required = true,
+            };
+            Command goCommand = new Command("go", "Generate Go files.")
+            {
+                excelDirectoryOption,
+                codeOutDirectoryOption,
+                codePackageOption,
+            };
+            goCommand.SetAction(parseResult =>
+            {
+                DirectoryInfo excel = parseResult.GetRequiredValue(excelDirectoryOption);
+                DirectoryInfo codeOut = parseResult.GetRequiredValue(codeOutDirectoryOption);
+                string codePackage = parseResult.GetRequiredValue(codePackageOption);
+                Commands.GenerateGoFiles(excel.FullName, codeOut.FullName, codePackage);
             });
 
             // JSON 文件生成命令
@@ -57,6 +77,7 @@ namespace ConfigToolByExcel
 
             RootCommand rootCommand = new RootCommand("Excel to json and code generator");
             rootCommand.Subcommands.Add(csharpCommand);
+            rootCommand.Subcommands.Add(goCommand);
             rootCommand.Subcommands.Add(jsonCommand);
 
             ParseResult parseResult = rootCommand.Parse(args);

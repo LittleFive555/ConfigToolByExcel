@@ -7,6 +7,10 @@
     "JSON": {
       "commandName": "Project",
       "commandLineArgs": "json --excel F:\\DouDizhu\\Configs --json-out F:\\DouDizhu\\DouDizhuClient\\Assets\\StreamingAssets\\Configs"
+    },
+    "Go": {
+      "commandName": "Project",
+      "commandLineArgs": "go --excel F:\\DouDizhu\\Configs --code-out F:\\DouDizhu\\DouDizhuServer\\data --code-package data"
     }
   }
 }
