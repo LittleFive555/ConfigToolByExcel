@@ -99,7 +99,7 @@ namespace ConfigToolByExcel
 
                 AddLine(fileStream, level, string.Format("type {0}List struct {{", classInfo.ClassName));
                 level++;
-                AddLine(fileStream, level, string.Format("Content {0}[]", classInfo.ClassName));
+                AddLine(fileStream, level, string.Format("Content []{0}", classInfo.ClassName));
                 level--;
                 AddLine(fileStream, level, "}");
 
