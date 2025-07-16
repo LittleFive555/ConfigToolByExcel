@@ -20,7 +20,7 @@ namespace ConfigToolByExcel
 
         private const string JsonObjectName = "Content";
 
-        private const string BaseClassName = "BaseData";
+        private const string IDColumnName = "ID";
 
         private static readonly Regex ClassNameRegex = new Regex("^[A-Z][A-Za-z0-9_]*");
         private static readonly Regex PropertyNameRegex = new Regex("^[A-Z][A-Za-z0-9_]*");
@@ -28,7 +28,13 @@ namespace ConfigToolByExcel
         // 添加基类信息
         private static readonly ClassInfo BaseDataInfo = new ClassInfo()
         {
-            ClassName = BaseClassName
+            ClassName = "BaseData",
+            IsGeneric = true,
+            GenericTypeList = new List<string> { "TIndex" },
+            Fields = new List<FieldInfo>
+            {
+                new FieldInfo { Name = IDColumnName, Type = "TIndex" },
+            },
         };
 
         public static IReadOnlyList<ClassInfo>? CollectClassesInfo(string docName)
@@ -53,7 +59,7 @@ namespace ConfigToolByExcel
             }
         }
 
-        public static ClassInfo GetBaseClassInfo()
+        public static ClassInfo GetPredefineClass()
         {
             return BaseDataInfo;
         }
@@ -91,10 +97,7 @@ namespace ConfigToolByExcel
 
         private static ClassInfo? GetClassInfo(SpreadsheetDocument document, Sheet sheet)
         {
-            ClassInfo classInfo = new ClassInfo()
-            {
-                ParentClassName = BaseDataInfo.ClassName,
-            };
+            ClassInfo classInfo = new ClassInfo();
             string? id = sheet.Id;
             if (id == null)
                 throw new NullReferenceException(string.Format("Error: Sheet {0} has no id.", sheet.Name));
@@ -116,29 +119,42 @@ namespace ConfigToolByExcel
                 throw new FormatException($"Invalid class name <{sheet.Name.Value}>. Regex pattern {ClassNameRegex}");
             classInfo.ClassName = string.Format("D{0}", sheet.Name.Value);
 
-            List<PropertyInfo> propertyInfos = new List<PropertyInfo>();
+            string dataIdType = string.Empty;
+
+            List<FieldInfo> propertyInfos = new List<FieldInfo>();
             // 获取所有输出的属性名及数据类型
             foreach (var outputSymbolCell in propertyOutputSymbolCells)
             {
                 if (IsOutput(OpenXMLHelper.GetCellValue(wbPart, outputSymbolCell)))
                 {
                     string columnName = OpenXMLHelper.GetColumnName(outputSymbolCell.CellReference?.Value);
+
                     string propertyName = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + PropertyNameCellRowIndex);
                     // 对属性名规范进行判断
                     if (!IsValidPropertyName(propertyName))
                         throw new FormatException($"Invalid property name <{propertyName}> in class <{classInfo.ClassName}>. Regex pattern {PropertyNameRegex}");
+
                     string propertyType = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + PropertyTypeRowIndex);
                     // 对属性类型规范进行判断
                     if (!ValueConverter.IsValidType(propertyType))
                         throw new InvalidCastException($"Invalid property type <{propertyType}> for property <{propertyName}> in class <{classInfo.ClassName}>.");
-                    propertyInfos.Add(new PropertyInfo() { Name = propertyName, Type = propertyType });
+
+                    if (propertyName == IDColumnName)
+                        dataIdType = propertyType;
+                    else
+                        propertyInfos.Add(new FieldInfo() { Name = propertyName, Type = propertyType });
                 }
             }
 
             if (propertyInfos.Count <= 0) // 没有输出的属性，为空类
                 return null;
 
-            classInfo.Properties = propertyInfos;
+            if (string.IsNullOrEmpty(dataIdType))
+                throw new FileFormatException($"Class <{classInfo.ClassName}> must have a property named <{IDColumnName}> to represent the data ID.");
+
+            classInfo.ParentClassName = string.Format("{0}<{1}>", BaseDataInfo.ClassName, dataIdType);
+
+            classInfo.Fields = propertyInfos;
             return classInfo;
         }
 

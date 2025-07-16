@@ -12,7 +12,7 @@
         {
             Directory.CreateDirectory(codeOutputFolderPath);
 
-            CodeFileGenerator.GenerateCSharpFile(namespaceString, ExcelReader.GetBaseClassInfo(), codeOutputFolderPath);
+            CodeFileGenerator.GenerateCSharpFile(namespaceString, ExcelReader.GetPredefineClass(), codeOutputFolderPath, false);
 
             var fileFullPaths = Directory.GetFiles(excelFilePath);
             foreach (var fullPath in fileFullPaths)
@@ -24,7 +24,7 @@
                 if (classes != null)
                 {
                     foreach (var classInfo in classes)
-                        CodeFileGenerator.GenerateCSharpFile(namespaceString, classInfo, codeOutputFolderPath);
+                        CodeFileGenerator.GenerateCSharpFile(namespaceString, classInfo, codeOutputFolderPath, true);
                 }
             }
         }

@@ -4,10 +4,12 @@
     {
         public string ClassName;
         public string ParentClassName;
-        public IReadOnlyList<PropertyInfo> Properties;
+        public bool IsGeneric;
+        public IReadOnlyList<string> GenericTypeList;
+        public IReadOnlyList<FieldInfo> Fields;
     }
 
-    internal struct PropertyInfo
+    internal struct FieldInfo
     {
         public string Name;
         public string Type;
