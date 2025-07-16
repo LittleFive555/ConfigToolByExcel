@@ -7,7 +7,7 @@ namespace ConfigToolByExcel
     {
         public static void GenerateDataFile(string fileName, JsonNode datas, string outputPath)
         {
-            string fullPath = Path.Combine(outputPath, string.Format("{0}.num", fileName));
+            string fullPath = Path.Combine(outputPath, fileName);
             if (File.Exists(fullPath))
                 File.Delete(fullPath);
 
