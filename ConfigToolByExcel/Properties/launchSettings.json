@@ -2,7 +2,7 @@
   "profiles": {
     "CSharp": {
       "commandName": "Project",
-      "commandLineArgs": "csharp --excel F:\\DouDizhu\\Configs --code-out F:\\DouDizhu\\DouDizhuClient\\Assets\\Scripts\\ConfigDefine --code-namespace ConfigDefine"
+      "commandLineArgs": "csharp --excel F:\\DouDizhu\\Configs --code-out F:\\DouDizhu\\DouDizhuClient\\Assets\\Scripts\\Config\\Define --code-namespace Config.Define"
     },
     "JSON": {
       "commandName": "Project",
@@ -10,7 +10,7 @@
     },
     "Go": {
       "commandName": "Project",
-      "commandLineArgs": "go --excel F:\\DouDizhu\\Configs --code-out F:\\DouDizhu\\DouDizhuServer\\data --code-package data"
+      "commandLineArgs": "go --excel F:\\DouDizhu\\Configs --code-out F:\\DouDizhu\\DouDizhuServer\\scripts\\data\\define --code-package define"
     }
   }
 }

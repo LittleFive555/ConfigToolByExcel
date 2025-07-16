@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using ConfigToolByExcel.CodeGenerator;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
@@ -25,19 +26,7 @@ namespace ConfigToolByExcel
         private static readonly Regex ClassNameRegex = new Regex("^[A-Z][A-Za-z0-9_]*");
         private static readonly Regex PropertyNameRegex = new Regex("^[A-Z][A-Za-z0-9_]*");
 
-        // 添加基类信息
-        private static readonly ClassInfo BaseDataInfo = new ClassInfo()
-        {
-            ClassName = "BaseData",
-            IsGeneric = true,
-            GenericTypeList = new List<string> { "TIndex" },
-            Fields = new List<FieldInfo>
-            {
-                new FieldInfo { Name = IDColumnName, Type = "TIndex" },
-            },
-        };
-
-        public static IReadOnlyList<ClassInfo>? CollectClassesInfo(string docName)
+        public static IReadOnlyList<TableInfo>? CollectTableInfo(string docName)
         {
             using (SpreadsheetDocument document = SpreadsheetDocument.Open(docName, false))
             {
@@ -45,23 +34,18 @@ namespace ConfigToolByExcel
                 if (sheets == null || sheets.Count() == 0)
                     return null;
 
-                List<ClassInfo> classesInfo = new List<ClassInfo>();
+                List<TableInfo> tablesInfo = new List<TableInfo>();
 
                 // 从配置表中获取自定义的配置类信息，一个工作表代表一个类
                 foreach (var sheet in sheets)
                 {
-                    ClassInfo? classInfo = GetClassInfo(document, sheet);
-                    if (classInfo != null)
-                        classesInfo.Add(classInfo.Value);
+                    TableInfo? tableInfo = GetTableInfo(document, sheet);
+                    if (tableInfo != null)
+                        tablesInfo.Add(tableInfo.Value);
                 }
 
-                return classesInfo;
+                return tablesInfo;
             }
-        }
-
-        public static ClassInfo GetPredefineClass()
-        {
-            return BaseDataInfo;
         }
 
         public static Dictionary<string, JsonObject>? CollectData(string docName)
@@ -82,8 +66,6 @@ namespace ConfigToolByExcel
 
                     // 从工作表中获取配置数据
                     JsonArray? datas = GetDatas(document, sheet);
-
-                    // 将配置数据转换为json格式
                     if (datas != null && datas.Count > 0)
                     {
                         var jsonObject = new JsonObject { { JsonObjectName, datas } };
@@ -95,9 +77,9 @@ namespace ConfigToolByExcel
             }
         }
 
-        private static ClassInfo? GetClassInfo(SpreadsheetDocument document, Sheet sheet)
+        private static TableInfo? GetTableInfo(SpreadsheetDocument document, Sheet sheet)
         {
-            ClassInfo classInfo = new ClassInfo();
+            TableInfo tableInfo = new TableInfo();
             string? id = sheet.Id;
             if (id == null)
                 throw new NullReferenceException(string.Format("Error: Sheet {0} has no id.", sheet.Name));
@@ -117,7 +99,7 @@ namespace ConfigToolByExcel
             // 对类名规范进行判断
             if (!IsValidClassName(sheet.Name.Value))
                 throw new FormatException($"Invalid class name <{sheet.Name.Value}>. Regex pattern {ClassNameRegex}");
-            classInfo.ClassName = string.Format("D{0}", sheet.Name.Value);
+            tableInfo.TableName = sheet.Name.Value;
 
             string dataIdType = string.Empty;
 
@@ -132,17 +114,16 @@ namespace ConfigToolByExcel
                     string propertyName = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + PropertyNameCellRowIndex);
                     // 对属性名规范进行判断
                     if (!IsValidPropertyName(propertyName))
-                        throw new FormatException($"Invalid property name <{propertyName}> in class <{classInfo.ClassName}>. Regex pattern {PropertyNameRegex}");
+                        throw new FormatException($"Invalid property name <{propertyName}> in table <{tableInfo.TableName}>. Regex pattern {PropertyNameRegex}");
 
                     string propertyType = OpenXMLHelper.GetCellValue(wbPart, worksheetPart, columnName + PropertyTypeRowIndex);
                     // 对属性类型规范进行判断
                     if (!ValueConverter.IsValidType(propertyType))
-                        throw new InvalidCastException($"Invalid property type <{propertyType}> for property <{propertyName}> in class <{classInfo.ClassName}>.");
+                        throw new InvalidCastException($"Invalid property type <{propertyType}> for property <{propertyName}> in table <{tableInfo.TableName}>.");
 
                     if (propertyName == IDColumnName)
                         dataIdType = propertyType;
-                    else
-                        propertyInfos.Add(new FieldInfo() { Name = propertyName, Type = propertyType });
+                    propertyInfos.Add(new FieldInfo() { Name = propertyName, Type = propertyType });
                 }
             }
 
@@ -150,12 +131,11 @@ namespace ConfigToolByExcel
                 return null;
 
             if (string.IsNullOrEmpty(dataIdType))
-                throw new FileFormatException($"Class <{classInfo.ClassName}> must have a property named <{IDColumnName}> to represent the data ID.");
+                throw new FileFormatException($"Table <{tableInfo.TableName}> must have a property named <{IDColumnName}> to represent the data ID.");
 
-            classInfo.ParentClassName = string.Format("{0}<{1}>", BaseDataInfo.ClassName, dataIdType);
-
-            classInfo.Fields = propertyInfos;
-            return classInfo;
+            tableInfo.IDType = dataIdType;
+            tableInfo.Fields = propertyInfos;
+            return tableInfo;
         }
 
         private static JsonArray? GetDatas(SpreadsheetDocument document, Sheet sheet)

@@ -1,4 +1,6 @@
-﻿namespace ConfigToolByExcel
+﻿using ConfigToolByExcel.CodeGenerator;
+
+namespace ConfigToolByExcel
 {
     public class Commands
     {
@@ -12,7 +14,7 @@
         {
             Directory.CreateDirectory(codeOutputFolderPath);
 
-            CodeFileGenerator.GenerateCSharpFile(namespaceString, ExcelReader.GetPredefineClass(), codeOutputFolderPath, false);
+            CSharpCodeGenerator.GenerateBaseClassFile(namespaceString, codeOutputFolderPath);
 
             var fileFullPaths = Directory.GetFiles(excelFilePath);
             foreach (var fullPath in fileFullPaths)
@@ -20,11 +22,11 @@
                 if (!fullPath.EndsWith(".xlsx"))
                     continue;
 
-                var classes = ExcelReader.CollectClassesInfo(fullPath);
-                if (classes != null)
+                var tables = ExcelReader.CollectTableInfo(fullPath);
+                if (tables != null)
                 {
-                    foreach (var classInfo in classes)
-                        CodeFileGenerator.GenerateCSharpFile(namespaceString, classInfo, codeOutputFolderPath, true);
+                    foreach (var table in tables)
+                        CSharpCodeGenerator.GenerateCSharpFile(namespaceString, table, codeOutputFolderPath);
                 }
             }
         }
@@ -32,16 +34,22 @@
         public static void GenerateGoFiles(string excelFilePath, string codeOutputFolderPath, string packageName)
         {
             Directory.CreateDirectory(codeOutputFolderPath);
+
+            GoCodeGenerator.GenerateInterfaceFile(packageName, codeOutputFolderPath);
+
             var fileFullPaths = Directory.GetFiles(excelFilePath);
             foreach (var fullPath in fileFullPaths)
             {
                 if (!fullPath.EndsWith(".xlsx"))
                     continue;
-                var classes = ExcelReader.CollectClassesInfo(fullPath);
+
+                var classes = ExcelReader.CollectTableInfo(fullPath);
                 if (classes != null)
                 {
                     foreach (var classInfo in classes)
-                        CodeFileGenerator.GenerateGoFile(packageName, classInfo, codeOutputFolderPath);
+                        GoCodeGenerator.GenerateGoFile(packageName, classInfo, codeOutputFolderPath);
+
+                    GoCodeGenerator.GenerateMapperFile(packageName, classes, codeOutputFolderPath);
                 }
             }
         }
