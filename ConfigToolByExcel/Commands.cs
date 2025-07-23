@@ -38,20 +38,22 @@ namespace ConfigToolByExcel
             GoCodeGenerator.GenerateInterfaceFile(packageName, codeOutputFolderPath);
 
             var fileFullPaths = Directory.GetFiles(excelFilePath);
+            List<TableInfo> classes = new List<TableInfo>();
             foreach (var fullPath in fileFullPaths)
             {
                 if (!fullPath.EndsWith(".xlsx"))
                     continue;
 
-                var classes = ExcelReader.CollectTableInfo(fullPath);
-                if (classes != null)
-                {
-                    foreach (var classInfo in classes)
-                        GoCodeGenerator.GenerateGoFile(packageName, classInfo, codeOutputFolderPath);
+                var someTables = ExcelReader.CollectTableInfo(fullPath);
+                if (someTables == null)
+                    continue;
 
-                    GoCodeGenerator.GenerateMapperFile(packageName, classes, codeOutputFolderPath);
-                }
+                classes.AddRange(someTables);
+                foreach (var classInfo in classes)
+                    GoCodeGenerator.GenerateGoFile(packageName, classInfo, codeOutputFolderPath);
             }
+
+            GoCodeGenerator.GenerateMapperFile(packageName, classes, codeOutputFolderPath);
         }
 
         /// <summary>
